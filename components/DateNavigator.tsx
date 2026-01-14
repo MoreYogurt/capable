@@ -135,8 +135,8 @@ const DateNavigator: React.FC<DateNavigatorProps> = ({ selectedDate, onDateChang
       );
     }
     return (
-      <div 
-        className="calendar-grid"
+      <div
+        className="grid grid-cols-7 gap-1"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
