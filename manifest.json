@@ -1,0 +1,27 @@
+{
+  "short_name": "Capa-ble",
+  "name": "Capa-ble: Zen Eisenhower Matrix",
+  "description": "极简禅意的艾森豪威尔四象限待办应用。专注于情绪稳定与执行力。",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10313/10313364.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10313/10313364.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F5F5DC",
+  "background_color": "#F5F5DC",
+  "categories": ["productivity", "utilities"],
+  "lang": "zh-CN",
+  "dir": "ltr"
+}
