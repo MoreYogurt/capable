@@ -39,9 +39,10 @@ const FocusList: React.FC<FocusListProps> = ({
   };
 
   const currentConfig = QUADRANTS.find(q => q.id === selectedQuadrant);
-  const isAllDone = tasks.length > 0 && tasks.every(t => t.completed);
+  const completedCount = tasks.filter(t => t.completed).length;
+  const isAllDone = tasks.length > 0 && completedCount === tasks.length;
 
-  if (tasks.length === 0 || isAllDone) {
+  if (tasks.length === 0) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-12 px-8 text-center bg-white/40 backdrop-blur-sm rounded-[3rem] border border-amber-100 shadow-xl shadow-amber-900/5 animate-fade-in">
         <div className="flex flex-col items-center max-w-md w-full">
@@ -57,7 +58,7 @@ const FocusList: React.FC<FocusListProps> = ({
              </svg>
           </div>
           <div className="flex flex-col gap-2 mb-8">
-            <h3 className="text-2xl font-black text-amber-950 tracking-tight">{isAllDone ? "圆满收工" : "万事具备，只欠东风"}</h3>
+            <h3 className="text-2xl font-black text-amber-950 tracking-tight">万事具备，只欠东风</h3>
             <p className="text-stone-400 font-bold italic text-sm">稳如泰山，专注当下。</p>
           </div>
           <div className="w-full space-y-6">
@@ -78,6 +79,18 @@ const FocusList: React.FC<FocusListProps> = ({
   return (
     <div className="w-full space-y-8 pb-32 animate-fade-in">
       <div className="bg-white/70 backdrop-blur-xl rounded-[3rem] p-8 md:p-10 border border-amber-100/50 shadow-2xl shadow-amber-900/5 transition-all">
+        {isAllDone && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-emerald-50 to-amber-50 rounded-3xl border-2 border-emerald-200 animate-fade-in">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-3xl animate-bounce">🎉</span>
+              <div className="flex flex-col">
+                <h3 className="text-xl font-black text-emerald-900 tracking-tight">圆满收工！</h3>
+                <p className="text-sm text-emerald-700 font-bold">今日所有任务已完成，稳如泰山！</p>
+              </div>
+              <span className="text-3xl animate-bounce" style={{ animationDelay: '0.1s' }}>✨</span>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 px-2">
           <div className="flex flex-col">
             <h2 className="text-3xl font-black text-amber-950 tracking-tight">执行流</h2>
@@ -87,7 +100,7 @@ const FocusList: React.FC<FocusListProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3 bg-stone-50/50 px-5 py-2.5 rounded-2xl border border-stone-100 shadow-inner self-start md:self-auto">
-            <span className="text-stone-900 font-black text-sm tabular-nums">{tasks.filter(t => t.completed).length} / {tasks.length}</span>
+            <span className="text-stone-900 font-black text-sm tabular-nums">{completedCount} / {tasks.length}</span>
             <div className="w-px h-3 bg-stone-200" />
             <span className="text-[9px] font-black text-stone-400 uppercase tracking-tighter">今日进度</span>
           </div>
