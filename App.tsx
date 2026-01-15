@@ -83,8 +83,52 @@ const App: React.FC = () => {
   const [currentQuote, setCurrentQuote] = useState(ZEN_QUOTES[0]);
   const [audioStarted, setAudioStarted] = useState(false);
   const [rolloverVisible, setRolloverVisible] = useState(false);
-  
+
   const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const quoteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastQuoteTimeRef = useRef<number>(0);
+
+  // 智能文案管理系统
+  const setQuoteWithPriority = (quote: string, priority: 'high' | 'medium' | 'low' = 'medium') => {
+    const now = Date.now();
+    const timeSinceLastQuote = now - lastQuoteTimeRef.current;
+
+    // 高优先级：立即显示，清除定时器
+    if (priority === 'high') {
+      if (quoteTimerRef.current) {
+        clearTimeout(quoteTimerRef.current);
+      }
+      setCurrentQuote(quote);
+      lastQuoteTimeRef.current = now;
+      return;
+    }
+
+    // 中优先级：如果距离上次文案超过2秒，立即显示；否则延迟1秒
+    if (priority === 'medium') {
+      if (timeSinceLastQuote > 2000) {
+        setCurrentQuote(quote);
+        lastQuoteTimeRef.current = now;
+      } else {
+        if (quoteTimerRef.current) {
+          clearTimeout(quoteTimerRef.current);
+        }
+        quoteTimerRef.current = setTimeout(() => {
+          setCurrentQuote(quote);
+          lastQuoteTimeRef.current = Date.now();
+        }, 1000);
+      }
+      return;
+    }
+
+    // 低优先级：如果距离上次文案超过3秒才显示
+    if (priority === 'low') {
+      if (timeSinceLastQuote > 3000) {
+        setCurrentQuote(quote);
+        lastQuoteTimeRef.current = now;
+      }
+      // 否则忽略
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -167,6 +211,15 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
   }, [viewMode]);
 
+  // 清理文案定时器，防止内存泄漏
+  useEffect(() => {
+    return () => {
+      if (quoteTimerRef.current) {
+        clearTimeout(quoteTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleDateChange = (newDate: string) => {
     if (newDate === selectedDate) return;
     setIsSliding(true);
@@ -222,7 +275,8 @@ const App: React.FC = () => {
     if (!newText.trim()) {
       deleteTask(id);
       const discards = CAPY_CAPTIONS.DISCARD;
-      setCurrentQuote(discards[Math.floor(Math.random() * discards.length)]);
+      const quote = discards[Math.floor(Math.random() * discards.length)];
+      setQuoteWithPriority(quote, 'medium');
       return;
     }
     setTaskMap(prev => {
@@ -248,19 +302,24 @@ const App: React.FC = () => {
             // 只有完成今天的任务才更新坚持天数
             if (isCompletingTodayTask) {
               updateStreak();
+              // 完成今天的任务：高优先级，显示禅意语录
+              const zenQuote = ZEN_QUOTES[Math.floor(Math.random() * ZEN_QUOTES.length)];
+              setQuoteWithPriority(zenQuote, 'high');
             } else {
               // 完成其他日期的任务，显示提示
               const taskDate = new Date(selectedDate);
               const todayDate = new Date(today);
 
               if (taskDate < todayDate) {
-                // 完成过去的任务
+                // 完成过去的任务：中优先级
                 const pastQuotes = CAPY_CAPTIONS.PAST_TASK_COMPLETE;
-                setCurrentQuote(pastQuotes[Math.floor(Math.random() * pastQuotes.length)]);
+                const quote = pastQuotes[Math.floor(Math.random() * pastQuotes.length)];
+                setQuoteWithPriority(quote, 'medium');
               } else {
-                // 完成未来的任务
+                // 完成未来的任务：中优先级
                 const futureQuotes = CAPY_CAPTIONS.FUTURE_TASK_COMPLETE;
-                setCurrentQuote(futureQuotes[Math.floor(Math.random() * futureQuotes.length)]);
+                const quote = futureQuotes[Math.floor(Math.random() * futureQuotes.length)];
+                setQuoteWithPriority(quote, 'medium');
               }
             }
 
@@ -269,11 +328,6 @@ const App: React.FC = () => {
               const ageInDays = (Date.now() - task.createdAt) / (1000 * 60 * 60 * 24);
               if (ageInDays > 3) playSFX(SFX_URLS.CRACK, 0.5);
               else playSFX(SFX_URLS.CHECK);
-            }
-
-            // 只有完成今天的任务才显示禅意语录
-            if (isCompletingTodayTask) {
-              setCurrentQuote(ZEN_QUOTES[Math.floor(Math.random() * ZEN_QUOTES.length)]);
             }
           }
           return { ...task, completed: newStatus };
@@ -306,7 +360,7 @@ const App: React.FC = () => {
         return { ...prev, [yesterday]: updatedYesterday, [today]: [...rolledOverTasks, ...todayTasks] };
       });
       setRolloverVisible(false);
-      setCurrentQuote("昨日因缘已随行，慢慢来吧。");
+      setQuoteWithPriority("昨日因缘已随行，慢慢来吧。", 'high');
       setIsCelebrating(true);
       setTimeout(() => setIsCelebrating(false), 1200);
     }
@@ -329,14 +383,14 @@ const App: React.FC = () => {
     const count = currentDayTasks.filter(t => t.completed).length;
     if (count === 0) {
       setIsShaking(true);
-      setCurrentQuote("🧹 别急，目前还没有需要清理的杂物。");
+      setQuoteWithPriority("🧹 别急，目前还没有需要清理的杂物。", 'medium');
       setTimeout(() => setIsShaking(false), 600);
       return;
     }
     const clearAction = () => {
       playSFX(SFX_URLS.WASH);
       setTaskMap(prev => ({ ...prev, [selectedDate]: currentDayTasks.filter(t => !t.completed) }));
-      setCurrentQuote("🌊 心如明镜，杂念已随水流去。");
+      setQuoteWithPriority("🌊 心如明镜，杂念已随水流去。", 'high');
       setIsCelebrating(true);
       setTimeout(() => setIsCelebrating(false), 1200);
     };
