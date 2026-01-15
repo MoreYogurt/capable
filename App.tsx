@@ -233,6 +233,9 @@ const App: React.FC = () => {
 
   const toggleTask = (id: string) => {
     startAudioEngine();
+    const today = getLocalDateString();
+    const isCompletingTodayTask = selectedDate === today;
+
     setTaskMap(prev => {
       const dayTasks = prev[selectedDate] || [];
       const updatedDayTasks = dayTasks.map(task => {
@@ -241,16 +244,37 @@ const App: React.FC = () => {
           if (newStatus) {
             setIsCelebrating(true);
             setTimeout(() => setIsCelebrating(false), 800);
-            updateStreak();
-            
+
+            // 只有完成今天的任务才更新坚持天数
+            if (isCompletingTodayTask) {
+              updateStreak();
+            } else {
+              // 完成其他日期的任务，显示提示
+              const taskDate = new Date(selectedDate);
+              const todayDate = new Date(today);
+
+              if (taskDate < todayDate) {
+                // 完成过去的任务
+                const pastQuotes = CAPY_CAPTIONS.PAST_TASK_COMPLETE;
+                setCurrentQuote(pastQuotes[Math.floor(Math.random() * pastQuotes.length)]);
+              } else {
+                // 完成未来的任务
+                const futureQuotes = CAPY_CAPTIONS.FUTURE_TASK_COMPLETE;
+                setCurrentQuote(futureQuotes[Math.floor(Math.random() * futureQuotes.length)]);
+              }
+            }
+
             if (task.quadrant === 'DO') playSFX(SFX_URLS.STEAM, 0.6);
             else {
               const ageInDays = (Date.now() - task.createdAt) / (1000 * 60 * 60 * 24);
               if (ageInDays > 3) playSFX(SFX_URLS.CRACK, 0.5);
               else playSFX(SFX_URLS.CHECK);
             }
-            
-            setCurrentQuote(ZEN_QUOTES[Math.floor(Math.random() * ZEN_QUOTES.length)]);
+
+            // 只有完成今天的任务才显示禅意语录
+            if (isCompletingTodayTask) {
+              setCurrentQuote(ZEN_QUOTES[Math.floor(Math.random() * ZEN_QUOTES.length)]);
+            }
           }
           return { ...task, completed: newStatus };
         }
